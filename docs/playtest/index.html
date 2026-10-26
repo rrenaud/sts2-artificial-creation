@@ -186,18 +186,13 @@ function chips(deck, prev) {
 function shot(e, small) {
   const kind = { hand: "In hand", selected: "Selected", after: "After play", fight_rewards: "Rewards", rewards: "Card offer", pick: "Pick", skip: "Skipped" }[e.Kind] || e.Kind;
   const tagCls = ["hand", "selected", "after"].includes(e.Kind) ? e.Kind : "reward";
-  let detail = "";
-  if (e.Kind === "hand") {
-    const i = e.Hand.indexOf(AC);
-    detail = `Card ${i + 1} of ${e.Hand.length}: ${e.Hand.map(esc).join(" · ")}`;
-  } else if (e.Kind === "rewards" || e.Kind === "pick" || e.Kind === "skip") {
-    detail = esc(e.Message);
-  }
-  const cap = `${kind}, floor ${e.Floor} turn ${e.Turn}. ${e.Status || ""}`;
-  const title = `Floor ${e.Floor} · ${ENC[e.Floor]} · Turn ${e.Turn}`;
+  // Captions carry only what the screenshot can't show: which card was picked, or that the reward was skipped.
+  const detail = e.Kind === "pick" ? esc(e.Message.split(".")[0]) : "";
+  const cap = `${kind}, ${ENC[e.Floor]}, turn ${e.Turn}`;
+  const title = `${ENC[e.Floor]} · Turn ${e.Turn}`;
   return `<figure>
-    <button type="button" data-src="${esc(e.Screenshot)}" data-cap="${esc(cap)}" data-title="${esc(title)}" data-kind="${esc(kind)}" data-tag="${tagCls}" data-status="${esc(e.Status || "")}" data-detail="${esc(detail.replace(/&amp;/g, "&"))}" aria-label="Enlarge: ${esc(cap)}"><img loading="lazy" src="${esc(e.Screenshot)}" alt="${esc(cap)}"></button>
-    <figcaption><span class="tag ${tagCls}">${kind} · #${e.Number}</span>${small ? "" : `<span class="mono">${esc(e.Status || "")}</span>`}${detail ? `<span>${detail}</span>` : ""}</figcaption>
+    <button type="button" data-src="${esc(e.Screenshot)}" data-cap="${esc(cap)}" data-title="${esc(title)}" data-kind="${esc(kind)}" data-tag="${tagCls}" data-detail="${esc(detail.replace(/&amp;/g, "&"))}" aria-label="Enlarge: ${esc(cap)}"><img loading="lazy" src="${esc(e.Screenshot)}" alt="${esc(cap)}"></button>
+    <figcaption><span class="tag ${tagCls}">${kind}</span>${detail ? `<span>${detail}</span>` : ""}</figcaption>
   </figure>`;
 }
 
