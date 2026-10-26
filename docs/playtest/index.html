@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Artificial Creation Fight Review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kreon:wght@400;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: one column run timeline; each fight is a block with deck before/after, then turn-by-turn shots. */
+:root {
+  --bg: #eef1f5; --panel: #ffffff; --ink: #18222e; --muted: #5a6878; --line: #d3dae3;
+  --glass: #2c7f93; --glass-soft: #dcf0f4; --brass: #9a6a12; --brass-soft: #f6ecd6;
+  --played: #1f7a4d; --played-soft: #dff3e8; --held: #a2541a; --held-soft: #f9e8da; --none: #6b7684; --none-soft: #e7ebf0;
+  --hp: #b3262f;
+  --display: "Kreon", Georgia, serif; --body: "Source Sans 3", system-ui, sans-serif; --mono: "JetBrains Mono", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121a23; --panel: #1a2430; --ink: #e3e9f0; --muted: #93a2b3; --line: #2c3a49;
+  --glass: #7fd0e0; --glass-soft: #173640; --brass: #e2b55c; --brass-soft: #3a2f17;
+  --played: #6fd39f; --played-soft: #183a29; --held: #f0a36a; --held-soft: #3d2718; --none: #9aa6b4; --none-soft: #242f3c;
+  --hp: #f07a80; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121a23; --panel: #1a2430; --ink: #e3e9f0; --muted: #93a2b3; --line: #2c3a49;
+  --glass: #7fd0e0; --glass-soft: #173640; --brass: #e2b55c; --brass-soft: #3a2f17;
+  --played: #6fd39f; --played-soft: #183a29; --held: #f0a36a; --held-soft: #3d2718; --none: #9aa6b4; --none-soft: #242f3c;
+  --hp: #f07a80; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 16px/1.5 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-block: 32px 64px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; line-height: 1.15; }
+h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); }
+h2 { font-size: 1.45rem; }
+h3 { font-size: 1rem; font-weight: 600; }
+.eyebrow { font: 600 .75rem var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.muted { color: var(--muted); }
+.mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+header { display: grid; gap: 10px; }
+header p { margin: 0; max-width: 68ch; }
+
+.summary { overflow-x: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { font: 600 .72rem var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+td.num, th.num { text-align: right; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+tr:last-child td { border-bottom: 0; }
+td a { color: inherit; text-decoration-color: var(--line); text-underline-offset: 3px; }
+.bar { display: inline-block; height: 8px; background: var(--hp); border-radius: 2px; vertical-align: middle; margin-left: 8px; opacity: .75; }
+
+.pill { display: inline-flex; align-items: center; gap: 6px; font: 600 .74rem var(--mono); letter-spacing: .04em; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.pill.played { background: var(--played-soft); color: var(--played); }
+.pill.held { background: var(--held-soft); color: var(--held); }
+.pill.none { background: var(--none-soft); color: var(--none); }
+.pill.room { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+.pill.room.elite { border-color: var(--brass); color: var(--brass); }
+.pill.room.boss { background: var(--brass-soft); border-color: var(--brass); color: var(--brass); }
+
+.timeline { display: grid; gap: 14px; }
+.stop { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 6px 4px 6px 14px; border-left: 2px dashed var(--line); color: var(--muted); font-size: .92rem; }
+.stop b { color: var(--ink); font-weight: 600; }
+.stop .mono { color: var(--muted); }
+
+.fight { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: grid; gap: 18px; scroll-margin-top: 16px; }
+.fight.is-played { border-left: 4px solid var(--played); }
+.fight.is-held { border-left: 4px solid var(--held); }
+.fight-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.fight-head h2 { margin-right: auto; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: .9rem; }
+.stats span b { font-family: var(--mono); font-weight: 600; font-variant-numeric: tabular-nums; }
+.stats .dmg b { color: var(--hp); }
+
+.decks { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 760px) { .decks { grid-template-columns: 1fr; } }
+.deck { min-width: 0; display: grid; gap: 8px; align-content: start; }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { font-size: .84rem; padding: 2px 8px; border-radius: 5px; background: var(--bg); border: 1px solid var(--line); white-space: nowrap; }
+.chip .n { font-family: var(--mono); color: var(--muted); font-size: .76rem; margin-left: 3px; }
+.chip.ac { background: var(--glass-soft); border-color: var(--glass); color: var(--glass); font-weight: 600; }
+.chip.new { border-color: var(--brass); background: var(--brass-soft); }
+.chip.new::before { content: "+ "; color: var(--brass); font-weight: 700; }
+.chip.up { border-style: dashed; border-color: var(--brass); }
+.note { font-size: .85rem; color: var(--muted); }
+
+.turns { display: grid; gap: 14px; }
+.turn { display: grid; grid-template-columns: 74px 1fr; gap: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+@media (max-width: 560px) { .turn { grid-template-columns: 1fr; } }
+.turn-label { font: 600 .8rem var(--mono); color: var(--muted); padding-top: 2px; }
+.turn-body { min-width: 0; display: grid; gap: 10px; }
+.plays { font-size: .9rem; display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: baseline; }
+.plays .k { color: var(--muted); font-size: .8rem; margin-right: 2px; }
+.plays .p { padding: 0 6px; border-radius: 4px; background: var(--bg); }
+.plays .p.ac { background: var(--glass-soft); color: var(--glass); font-weight: 600; }
+.verdict { font-size: .88rem; font-weight: 600; }
+.verdict.played { color: var(--played); }
+.verdict.held { color: var(--held); }
+
+.shots { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.shots.rewards { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+figure { margin: 0; min-width: 0; display: grid; gap: 6px; }
+figure button { all: unset; cursor: zoom-in; display: block; border-radius: 6px; overflow: hidden; border: 1px solid var(--line); }
+figure button:focus-visible { outline: 3px solid var(--glass); outline-offset: 2px; }
+figure img { display: block; width: 100%; aspect-ratio: 1854 / 1042; object-fit: cover; background: var(--bg); }
+figcaption { font-size: .82rem; color: var(--muted); display: grid; gap: 2px; }
+figcaption b { color: var(--ink); font-weight: 600; }
+figcaption .mono { font-size: .74rem; }
+.tag { font: 600 .68rem var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.tag.hand { color: var(--held); } .tag.selected, .tag.after { color: var(--played); } .tag.reward { color: var(--brass); }
+
+details.rw summary { cursor: pointer; font-size: .9rem; color: var(--muted); }
+details.rw[open] summary { margin-bottom: 10px; }
+
+dialog { padding: 0; border: 0; margin: 0; width: 100vw; height: 100vh; max-width: none; max-height: none; background: #07090d; color: #e3e9f0; overflow: hidden; }
+dialog::backdrop { background: #07090d; }
+.v-stage { position: absolute; inset: 0 0 92px; display: grid; place-items: center; padding: max(12px, env(safe-area-inset-top, 0px)) 64px 0; }
+.v-stage img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; border-radius: 4px; user-select: none; -webkit-user-drag: none; }
+.v-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 92px; padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); display: flex; gap: 16px; align-items: center; background: #0d1117; border-top: 1px solid #222b36; }
+.v-cap { min-width: 0; flex: 1; display: grid; gap: 2px; }
+.v-cap b { font: 600 1rem var(--display); color: #fff; }
+.v-cap span { font-size: .82rem; color: #9fb0c2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.v-cap .v-tag { font: 600 .7rem var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.v-tag.hand { color: #f0a36a; } .v-tag.selected, .v-tag.after { color: #6fd39f; } .v-tag.reward { color: #e2b55c; }
+.v-count { font: 600 .85rem var(--mono); color: #9fb0c2; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.v-nav { position: absolute; top: 0; bottom: 92px; width: 64px; border: 0; background: transparent; color: #fff; font-size: 2rem; cursor: pointer; opacity: .55; }
+.v-nav:hover, .v-nav:focus-visible { opacity: 1; background: rgb(255 255 255 / .05); outline: none; }
+.v-prev { left: 0; } .v-next { right: 0; }
+.v-close { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); right: calc(10px + env(safe-area-inset-right, 0px)); font: 600 .85rem var(--body); padding: 6px 12px; border-radius: 6px; border: 0; background: rgb(0 0 0 / .6); color: #fff; cursor: pointer; z-index: 2; }
+.v-hint { font-size: .75rem; color: #6c7c8e; white-space: nowrap; }
+@media (max-width: 640px) { .v-hint { display: none; } .v-stage { padding-inline: 8px; } .v-nav { width: 44px; } }
+.go { justify-self: start; font: 600 .9rem var(--body); padding: 8px 14px; border-radius: 8px; border: 1px solid var(--glass); background: var(--glass-soft); color: var(--glass); cursor: pointer; }
+.go:focus-visible { outline: 3px solid var(--glass); outline-offset: 2px; }
+@media (prefers-reduced-motion: no-preference) { figure img { transition: transform .2s; } figure button:hover img { transform: scale(1.02); } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow" id="runline"></div>
+    <h1>Artificial Creation Fight Review</h1>
+    <p id="lede"></p>
+    <button class="go" id="go" type="button">View all screenshots →</button>
+  </header>
+  <section class="summary" aria-label="Fight summary"><table id="summary"></table></section>
+  <div class="timeline" id="timeline"></div>
+</div>
+
+<dialog id="viewer" aria-label="Screenshot viewer">
+  <button class="v-close" id="v-close" type="button">Close (Esc)</button>
+  <div class="v-stage" id="v-stage"><img id="viewer-img" alt=""></div>
+  <button class="v-nav v-prev" id="v-prev" type="button" aria-label="Previous screenshot">‹</button>
+  <button class="v-nav v-next" id="v-next" type="button" aria-label="Next screenshot">›</button>
+  <div class="v-bar"><div class="v-cap" id="viewer-cap"></div><span class="v-hint">← → to flip</span><span class="v-count" id="v-count"></span></div>
+</dialog>
+
+<script>
+const DATA = {"session": "20261026_001737_917", "seed": "GLASS276", "ascension": 10, "nodes": [{"floor": 1, "type": "ancient", "encounter": "Neow", "turns": 0, "hp_before": 60, "hp_after": 60, "max_hp": 75, "damage": 0, "gained": ["Artificial Creation"], "upgraded": [], "offered": [], "skipped_reward": false, "rest": [], "relics": ["Arcane Scroll"], "potions_used": [], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Dualcast": 1, "Ascender's Bane": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Dualcast": 1, "Ascender's Bane": 1, "Artificial Creation": 1}, "events": []}, {"floor": 2, "type": "monster", "encounter": "Sludge Spinner", "turns": 3, "hp_before": 60, "hp_after": 58, "max_hp": 75, "damage": 2, "gained": ["Refract"], "upgraded": [], "offered": ["Refract", "Sweeping Beam", "Turbo"], "skipped_reward": false, "rest": [], "relics": [], "potions_used": [], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Dualcast": 1, "Ascender's Bane": 1, "Artificial Creation": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Dualcast": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1}, "events": [{"Number": 1, "Kind": "hand", "Floor": 2, "Turn": 1, "Message": "Artificial Creation entered the hand", "Hand": ["Artificial Creation", "Zap", "Defend", "Defend", "Ascender's Bane"], "Status": "HP 60/75 \u00b7 Energy 3 \u00b7 Orbs 1/3: LIGHTNING_ORB", "Screenshot": "shots/0001_hand.webp", "Highlights": [{"X": 33.379154205322266, "Y": 97.12786865234375, "Width": 14.825477600097656, "Height": 2.87213134765625, "Label": "Artificial Creation \u00b7 1/5"}]}, {"Number": 2, "Kind": "played", "Floor": 2, "Turn": 1, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 3, "Kind": "played", "Floor": 2, "Turn": 1, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 4, "Kind": "played", "Floor": 2, "Turn": 1, "Message": "Played Zap", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 5, "Kind": "played", "Floor": 2, "Turn": 2, "Message": "Played Dualcast", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 6, "Kind": "played", "Floor": 2, "Turn": 2, "Message": "Played Strike \u2192 SLUDGE_SPINNER", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 7, "Kind": "played", "Floor": 2, "Turn": 2, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 8, "Kind": "played", "Floor": 2, "Turn": 3, "Message": "Played Dualcast", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 9, "Kind": "fight_rewards", "Floor": 2, "Turn": 3, "Message": "Fight rewards", "Hand": ["Strike", "Strike", "Strike", "Strike"], "Status": "HP 58/75 \u00b7 Energy 2 \u00b7 Orbs 0/3: ", "Screenshot": "shots/0009_fight_rewards.webp", "Highlights": []}, {"Number": 10, "Kind": "rewards", "Floor": 2, "Turn": 3, "Message": "Card rewards: Sweeping Beam | TURBO | Refract", "Hand": ["Strike", "Strike", "Strike", "Strike"], "Status": "HP 58/75 \u00b7 Energy 2 \u00b7 Orbs 0/3: ", "Screenshot": "shots/0010_rewards.webp", "Highlights": []}, {"Number": 11, "Kind": "pick", "Floor": 2, "Turn": 3, "Message": "Picked Refract. Offered: Sweeping Beam | TURBO | Refract", "Hand": ["Strike", "Strike", "Strike", "Strike"], "Status": "HP 58/75 \u00b7 Energy 2 \u00b7 Orbs 0/3: ", "Screenshot": "shots/0011_pick.webp", "Highlights": []}]}, {"floor": 3, "type": "monster", "encounter": "Seapunk", "turns": 3, "hp_before": 58, "hp_after": 52, "max_hp": 75, "damage": 6, "gained": ["Barrage"], "upgraded": [], "offered": ["Barrage", "Uproar", "Feral"], "skipped_reward": false, "rest": [], "relics": [], "potions_used": [], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Dualcast": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Dualcast": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1}, "events": [{"Number": 12, "Kind": "played", "Floor": 3, "Turn": 1, "Message": "Played Zap", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 13, "Kind": "played", "Floor": 3, "Turn": 1, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 14, "Kind": "played", "Floor": 3, "Turn": 1, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 15, "Kind": "hand", "Floor": 3, "Turn": 2, "Message": "Artificial Creation entered the hand", "Hand": ["Artificial Creation", "Defend", "Strike", "Ascender's Bane", "Strike"], "Status": "HP 55/75 \u00b7 Energy 3 \u00b7 Orbs 2/3: LIGHTNING_ORB, LIGHTNING_ORB", "Screenshot": "shots/0015_hand.webp", "Highlights": [{"X": 33.533939361572266, "Y": 97.03604888916016, "Width": 14.82547378540039, "Height": 2.9639511108398438, "Label": "Artificial Creation \u00b7 1/5"}]}, {"Number": 16, "Kind": "played", "Floor": 3, "Turn": 2, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 17, "Kind": "played", "Floor": 3, "Turn": 2, "Message": "Played Strike \u2192 SEAPUNK", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 18, "Kind": "played", "Floor": 3, "Turn": 2, "Message": "Played Strike \u2192 SEAPUNK", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 19, "Kind": "played", "Floor": 3, "Turn": 3, "Message": "Played Refract \u2192 SEAPUNK", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 20, "Kind": "fight_rewards", "Floor": 3, "Turn": 3, "Message": "Fight rewards", "Hand": ["Dualcast", "Defend", "Defend", "Defend"], "Status": "HP 52/75 \u00b7 Energy 0 \u00b7 Orbs 3/3: LIGHTNING_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": "shots/0020_fight_rewards.webp", "Highlights": []}, {"Number": 21, "Kind": "rewards", "Floor": 3, "Turn": 3, "Message": "Card rewards: Uproar | Barrage | Feral", "Hand": ["Dualcast", "Defend", "Defend", "Defend"], "Status": "HP 52/75 \u00b7 Energy 0 \u00b7 Orbs 3/3: LIGHTNING_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": "shots/0021_rewards.webp", "Highlights": []}, {"Number": 22, "Kind": "pick", "Floor": 3, "Turn": 3, "Message": "Picked Barrage. Offered: Uproar | Barrage | Feral", "Hand": ["Dualcast", "Defend", "Defend", "Defend"], "Status": "HP 52/75 \u00b7 Energy 0 \u00b7 Orbs 3/3: LIGHTNING_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": "shots/0022_pick.webp", "Highlights": []}]}, {"floor": 4, "type": "unknown", "encounter": "Waterlogged Scriptorium", "turns": 0, "hp_before": 52, "hp_after": 58, "max_hp": 81, "damage": 0, "gained": [], "upgraded": [], "offered": [], "skipped_reward": false, "rest": [], "relics": [], "potions_used": [], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Dualcast": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Dualcast": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1}, "events": []}, {"floor": 5, "type": "unknown", "encounter": "Toadpoles", "turns": 2, "hp_before": 58, "hp_after": 50, "max_hp": 81, "damage": 8, "gained": ["Chill"], "upgraded": [], "offered": ["Chill", "Tempest", "Ftl"], "skipped_reward": false, "rest": [], "relics": [], "potions_used": [], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Dualcast": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Dualcast": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1}, "events": [{"Number": 23, "Kind": "hand", "Floor": 5, "Turn": 1, "Message": "Artificial Creation entered the hand", "Hand": ["Defend", "Strike", "Artificial Creation", "Strike", "Strike"], "Status": "HP 58/81 \u00b7 Energy 3 \u00b7 Orbs 1/3: LIGHTNING_ORB", "Screenshot": "shots/0023_hand.webp", "Highlights": [{"X": 50, "Y": 95.37036895751953, "Width": 12.5, "Height": 4.629631042480469, "Label": "Artificial Creation \u00b7 3/5"}]}, {"Number": 24, "Kind": "selected", "Floor": 5, "Turn": 1, "Message": "Selected Artificial Creation (may be cancelled)", "Hand": ["Defend", "Strike", "Artificial Creation", "Strike", "Strike"], "Status": "HP 58/81 \u00b7 Energy 3 \u00b7 Orbs 1/3: LIGHTNING_ORB", "Screenshot": "shots/0024_selected.webp", "Highlights": [{"X": 50, "Y": 80.64814758300781, "Width": 15.625, "Height": 19.351852416992188, "Label": "Artificial Creation \u00b7 3/5"}]}, {"Number": 25, "Kind": "played", "Floor": 5, "Turn": 1, "Message": "Played Artificial Creation", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 26, "Kind": "resolved", "Floor": 5, "Turn": 1, "Message": "Artificial Creation resolved", "Hand": [], "Status": "HP 58/81 \u00b7 Energy 0 \u00b7 Orbs 3/3: LIGHTNING_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": null, "Highlights": []}, {"Number": 27, "Kind": "after", "Floor": 5, "Turn": 1, "Message": "After Artificial Creation (settled frame)", "Hand": ["Defend", "Strike", "Strike", "Strike"], "Status": "HP 58/81 \u00b7 Energy 0 \u00b7 Orbs 3/3: LIGHTNING_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": "shots/0027_after.webp", "Highlights": []}, {"Number": 28, "Kind": "played", "Floor": 5, "Turn": 2, "Message": "Played Dualcast", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 29, "Kind": "fight_rewards", "Floor": 5, "Turn": 2, "Message": "Fight rewards", "Hand": ["Defend", "Ascender's Bane", "Refract", "Defend"], "Status": "HP 50/81 \u00b7 Energy 2 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": "shots/0029_fight_rewards.webp", "Highlights": []}, {"Number": 30, "Kind": "rewards", "Floor": 5, "Turn": 2, "Message": "Card rewards: Chill | Tempest | FTL", "Hand": ["Defend", "Ascender's Bane", "Refract", "Defend"], "Status": "HP 50/81 \u00b7 Energy 2 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": "shots/0030_rewards.webp", "Highlights": []}, {"Number": 31, "Kind": "pick", "Floor": 5, "Turn": 2, "Message": "Picked Chill. Offered: Chill | Tempest | FTL", "Hand": ["Defend", "Ascender's Bane", "Refract", "Defend"], "Status": "HP 50/81 \u00b7 Energy 2 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": "shots/0031_pick.webp", "Highlights": []}]}, {"floor": 6, "type": "monster", "encounter": "Fossil Stalker", "turns": 2, "hp_before": 50, "hp_after": 38, "max_hp": 81, "damage": 12, "gained": ["Hologram"], "upgraded": [], "offered": ["Hologram", "Gunk Up", "Cold Snap"], "skipped_reward": false, "rest": [], "relics": [], "potions_used": [], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Dualcast": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Dualcast": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Hologram": 1}, "events": [{"Number": 32, "Kind": "played", "Floor": 6, "Turn": 1, "Message": "Played Refract \u2192 FOSSIL_STALKER", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 33, "Kind": "played", "Floor": 6, "Turn": 1, "Message": "Played Chill", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 34, "Kind": "played", "Floor": 6, "Turn": 2, "Message": "Played Barrage \u2192 FOSSIL_STALKER", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 35, "Kind": "played", "Floor": 6, "Turn": 2, "Message": "Played Strike \u2192 FOSSIL_STALKER", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 36, "Kind": "fight_rewards", "Floor": 6, "Turn": 2, "Message": "Fight rewards", "Hand": ["Defend", "Dualcast", "Defend"], "Status": "HP 38/81 \u00b7 Energy 1 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, FROST_ORB", "Screenshot": "shots/0036_fight_rewards.webp", "Highlights": []}, {"Number": 37, "Kind": "rewards", "Floor": 6, "Turn": 2, "Message": "Card rewards: Gunk Up | Cold Snap | Hologram", "Hand": ["Defend", "Dualcast", "Defend"], "Status": "HP 38/81 \u00b7 Energy 1 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, FROST_ORB", "Screenshot": "shots/0037_rewards.webp", "Highlights": []}, {"Number": 38, "Kind": "pick", "Floor": 6, "Turn": 2, "Message": "Picked Hologram. Offered: Gunk Up | Cold Snap | Hologram", "Hand": ["Defend", "Dualcast", "Defend"], "Status": "HP 38/81 \u00b7 Energy 1 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, FROST_ORB", "Screenshot": "shots/0038_pick.webp", "Highlights": []}]}, {"floor": 7, "type": "rest_site", "encounter": "", "turns": 0, "hp_before": 38, "hp_after": 38, "max_hp": 81, "damage": 0, "gained": [], "upgraded": ["Dualcast"], "offered": [], "skipped_reward": false, "rest": ["SMITH"], "relics": [], "potions_used": [], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Dualcast": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Hologram": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Hologram": 1, "Dualcast+": 1}, "events": []}, {"floor": 8, "type": "monster", "encounter": "Haunted Ship", "turns": 4, "hp_before": 38, "hp_after": 14, "max_hp": 81, "damage": 24, "gained": [], "upgraded": [], "offered": ["Subroutine", "Tempest", "Claw"], "skipped_reward": true, "rest": [], "relics": [], "potions_used": [], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Hologram": 1, "Dualcast+": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Hologram": 1, "Dualcast+": 1}, "events": [{"Number": 39, "Kind": "played", "Floor": 8, "Turn": 1, "Message": "Played Dualcast+", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 40, "Kind": "played", "Floor": 8, "Turn": 1, "Message": "Played Strike \u2192 HAUNTED_SHIP", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 41, "Kind": "played", "Floor": 8, "Turn": 2, "Message": "Played Zap", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 42, "Kind": "played", "Floor": 8, "Turn": 2, "Message": "Played Hologram", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 43, "Kind": "played", "Floor": 8, "Turn": 2, "Message": "Played Zap", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 44, "Kind": "hand", "Floor": 8, "Turn": 3, "Message": "Artificial Creation entered the hand", "Hand": ["Refract", "Strike", "Ascender's Bane", "Artificial Creation", "Chill"], "Status": "HP 27/81 \u00b7 Energy 3 \u00b7 Orbs 2/3: LIGHTNING_ORB, LIGHTNING_ORB", "Screenshot": "shots/0044_hand.webp", "Highlights": [{"X": 57.355682373046875, "Y": 97.2138671875, "Width": 13.69610595703125, "Height": 2.7861328125, "Label": "Artificial Creation \u00b7 4/5"}]}, {"Number": 45, "Kind": "played", "Floor": 8, "Turn": 3, "Message": "Played Refract \u2192 HAUNTED_SHIP", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 46, "Kind": "played", "Floor": 8, "Turn": 3, "Message": "Played Chill", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 47, "Kind": "played", "Floor": 8, "Turn": 4, "Message": "Played Dualcast+", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 48, "Kind": "fight_rewards", "Floor": 8, "Turn": 4, "Message": "Fight rewards", "Hand": ["Defend", "Strike", "Dazed", "Strike"], "Status": "HP 14/81 \u00b7 Energy 3 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, FROST_ORB", "Screenshot": "shots/0048_fight_rewards.webp", "Highlights": []}, {"Number": 49, "Kind": "rewards", "Floor": 8, "Turn": 4, "Message": "Card rewards: Subroutine | Tempest | Claw", "Hand": ["Defend", "Strike", "Dazed", "Strike"], "Status": "HP 14/81 \u00b7 Energy 3 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, FROST_ORB", "Screenshot": "shots/0049_rewards.webp", "Highlights": []}, {"Number": 50, "Kind": "skip", "Floor": 8, "Turn": 4, "Message": "Reward alternative: Skip", "Hand": ["Defend", "Strike", "Dazed", "Strike"], "Status": "HP 14/81 \u00b7 Energy 3 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, FROST_ORB", "Screenshot": "shots/0050_skip.webp", "Highlights": []}]}, {"floor": 9, "type": "rest_site", "encounter": "", "turns": 0, "hp_before": 14, "hp_after": 38, "max_hp": 81, "damage": 0, "gained": [], "upgraded": [], "offered": [], "skipped_reward": false, "rest": ["HEAL"], "relics": [], "potions_used": [], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Hologram": 1, "Dualcast+": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Hologram": 1, "Dualcast+": 1}, "events": []}, {"floor": 10, "type": "treasure", "encounter": "", "turns": 0, "hp_before": 38, "hp_after": 38, "max_hp": 81, "damage": 0, "gained": [], "upgraded": [], "offered": [], "skipped_reward": false, "rest": [], "relics": ["Lantern"], "potions_used": [], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Hologram": 1, "Dualcast+": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Hologram": 1, "Dualcast+": 1}, "events": []}, {"floor": 11, "type": "rest_site", "encounter": "", "turns": 0, "hp_before": 38, "hp_after": 38, "max_hp": 81, "damage": 0, "gained": [], "upgraded": ["Hologram"], "offered": [], "skipped_reward": false, "rest": ["SMITH"], "relics": [], "potions_used": [], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Hologram": 1, "Dualcast+": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Dualcast+": 1, "Hologram+": 1}, "events": []}, {"floor": 12, "type": "elite", "encounter": "Terror Eel", "turns": 4, "hp_before": 38, "hp_after": 30, "max_hp": 81, "damage": 8, "gained": ["Fight Through"], "upgraded": [], "offered": ["Fight Through", "Compact", "Synthesis"], "skipped_reward": false, "rest": [], "relics": ["Petrified Toad"], "potions_used": ["Power Potion", "Weak Potion"], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Dualcast+": 1, "Hologram+": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Dualcast+": 1, "Hologram+": 1, "Fight Through": 1}, "events": [{"Number": 51, "Kind": "hand", "Floor": 12, "Turn": 1, "Message": "Artificial Creation entered the hand", "Hand": ["Hologram+", "Artificial Creation", "Defend", "Zap", "Ascender's Bane"], "Status": "HP 38/81 \u00b7 Energy 4 \u00b7 Orbs 1/3: LIGHTNING_ORB", "Screenshot": "shots/0051_hand.webp", "Highlights": [{"X": 41.5247917175293, "Y": 95.50027465820312, "Width": 13.69610595703125, "Height": 4.499725341796875, "Label": "Artificial Creation \u00b7 2/5"}]}, {"Number": 52, "Kind": "selected", "Floor": 12, "Turn": 1, "Message": "Selected Artificial Creation (may be cancelled)", "Hand": ["Hologram+", "Artificial Creation", "Defend", "Zap", "Ascender's Bane"], "Status": "HP 38/81 \u00b7 Energy 4 \u00b7 Orbs 1/3: LIGHTNING_ORB", "Screenshot": "shots/0052_selected.webp", "Highlights": [{"X": 41.145835876464844, "Y": 80.64814758300781, "Width": 15.624996185302734, "Height": 19.351852416992188, "Label": "Artificial Creation \u00b7 2/5"}]}, {"Number": 53, "Kind": "played", "Floor": 12, "Turn": 1, "Message": "Played Spinner", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 54, "Kind": "played", "Floor": 12, "Turn": 1, "Message": "Played Artificial Creation", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 55, "Kind": "resolved", "Floor": 12, "Turn": 1, "Message": "Artificial Creation resolved", "Hand": [], "Status": "HP 38/81 \u00b7 Energy 1 \u00b7 Orbs 3/3: LIGHTNING_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": null, "Highlights": []}, {"Number": 56, "Kind": "after", "Floor": 12, "Turn": 1, "Message": "After Artificial Creation (settled frame)", "Hand": ["Hologram+", "Defend", "Zap", "Ascender's Bane"], "Status": "HP 38/81 \u00b7 Energy 1 \u00b7 Orbs 3/3: LIGHTNING_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": "shots/0056_after.webp", "Highlights": []}, {"Number": 57, "Kind": "played", "Floor": 12, "Turn": 1, "Message": "Played Hologram+", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 58, "Kind": "played", "Floor": 12, "Turn": 2, "Message": "Played Refract \u2192 TERROR_EEL", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 59, "Kind": "played", "Floor": 12, "Turn": 2, "Message": "Played Dualcast+", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 60, "Kind": "played", "Floor": 12, "Turn": 3, "Message": "Played Barrage \u2192 TERROR_EEL", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 61, "Kind": "played", "Floor": 12, "Turn": 3, "Message": "Played Chill", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 62, "Kind": "played", "Floor": 12, "Turn": 4, "Message": "Played Barrage \u2192 TERROR_EEL", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 63, "Kind": "played", "Floor": 12, "Turn": 4, "Message": "Played Strike \u2192 TERROR_EEL", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 64, "Kind": "played", "Floor": 12, "Turn": 4, "Message": "Played Strike \u2192 TERROR_EEL", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 65, "Kind": "fight_rewards", "Floor": 12, "Turn": 4, "Message": "Fight rewards", "Hand": ["Defend", "Defend"], "Status": "HP 30/81 \u00b7 Energy 0 \u00b7 Orbs 3/3: GLASS_ORB, FROST_ORB, GLASS_ORB", "Screenshot": "shots/0065_fight_rewards.webp", "Highlights": []}, {"Number": 66, "Kind": "rewards", "Floor": 12, "Turn": 4, "Message": "Card rewards: Compact | Synthesis | Fight Through", "Hand": ["Defend", "Defend"], "Status": "HP 30/81 \u00b7 Energy 0 \u00b7 Orbs 3/3: GLASS_ORB, FROST_ORB, GLASS_ORB", "Screenshot": "shots/0066_rewards.webp", "Highlights": []}, {"Number": 67, "Kind": "pick", "Floor": 12, "Turn": 4, "Message": "Picked Fight Through. Offered: Compact | Synthesis | Fight Through", "Hand": ["Defend", "Defend"], "Status": "HP 30/81 \u00b7 Energy 0 \u00b7 Orbs 3/3: GLASS_ORB, FROST_ORB, GLASS_ORB", "Screenshot": "shots/0067_pick.webp", "Highlights": []}]}, {"floor": 13, "type": "rest_site", "encounter": "", "turns": 0, "hp_before": 30, "hp_after": 54, "max_hp": 81, "damage": 0, "gained": [], "upgraded": [], "offered": [], "skipped_reward": false, "rest": ["HEAL"], "relics": [], "potions_used": [], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Dualcast+": 1, "Hologram+": 1, "Fight Through": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Dualcast+": 1, "Hologram+": 1, "Fight Through": 1}, "events": []}, {"floor": 14, "type": "monster", "encounter": "Sewer Clam", "turns": 6, "hp_before": 54, "hp_after": 50, "max_hp": 81, "damage": 4, "gained": ["Shadow Shield"], "upgraded": [], "offered": ["Shadow Shield", "Beam Cell", "Lightning Rod"], "skipped_reward": false, "rest": [], "relics": [], "potions_used": [], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Dualcast+": 1, "Hologram+": 1, "Fight Through": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Dualcast+": 1, "Hologram+": 1, "Fight Through": 1, "Shadow Shield": 1}, "events": [{"Number": 68, "Kind": "played", "Floor": 14, "Turn": 1, "Message": "Played Fight Through", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 69, "Kind": "played", "Floor": 14, "Turn": 1, "Message": "Played Barrage \u2192 SEWER_CLAM", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 70, "Kind": "played", "Floor": 14, "Turn": 1, "Message": "Played Strike \u2192 SEWER_CLAM", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 71, "Kind": "played", "Floor": 14, "Turn": 2, "Message": "Played Dualcast+", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 72, "Kind": "played", "Floor": 14, "Turn": 2, "Message": "Played Refract \u2192 SEWER_CLAM", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 73, "Kind": "played", "Floor": 14, "Turn": 2, "Message": "Played Chill", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 74, "Kind": "hand", "Floor": 14, "Turn": 3, "Message": "Artificial Creation entered the hand", "Hand": ["Hologram+", "Zap", "Artificial Creation", "Defend", "Strike"], "Status": "HP 54/81 \u00b7 Energy 3 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, FROST_ORB", "Screenshot": "shots/0074_hand.webp", "Highlights": [{"X": 50, "Y": 95.37036895751953, "Width": 12.5, "Height": 4.629631042480469, "Label": "Artificial Creation \u00b7 3/5"}]}, {"Number": 75, "Kind": "played", "Floor": 14, "Turn": 3, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 76, "Kind": "played", "Floor": 14, "Turn": 3, "Message": "Played Hologram+", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 77, "Kind": "played", "Floor": 14, "Turn": 3, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 78, "Kind": "played", "Floor": 14, "Turn": 4, "Message": "Played Strike \u2192 SEWER_CLAM", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 79, "Kind": "played", "Floor": 14, "Turn": 4, "Message": "Played Strike \u2192 SEWER_CLAM", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 80, "Kind": "hand", "Floor": 14, "Turn": 5, "Message": "Artificial Creation entered the hand", "Hand": ["Strike", "Defend", "Artificial Creation", "Fight Through", "Zap"], "Status": "HP 54/81 \u00b7 Energy 3 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, FROST_ORB", "Screenshot": "shots/0080_hand.webp", "Highlights": [{"X": 50, "Y": 95.37036895751953, "Width": 12.5, "Height": 4.629631042480469, "Label": "Artificial Creation \u00b7 3/5"}]}, {"Number": 81, "Kind": "played", "Floor": 14, "Turn": 5, "Message": "Played Zap", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 82, "Kind": "played", "Floor": 14, "Turn": 5, "Message": "Played Strike \u2192 SEWER_CLAM", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 83, "Kind": "played", "Floor": 14, "Turn": 5, "Message": "Played Fight Through", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 84, "Kind": "played", "Floor": 14, "Turn": 6, "Message": "Played Barrage \u2192 SEWER_CLAM", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 85, "Kind": "fight_rewards", "Floor": 14, "Turn": 6, "Message": "Fight rewards", "Hand": ["Hologram+", "Wound", "Strike", "Dualcast+"], "Status": "HP 50/81 \u00b7 Energy 2 \u00b7 Orbs 3/3: GLASS_ORB, FROST_ORB, LIGHTNING_ORB", "Screenshot": "shots/0085_fight_rewards.webp", "Highlights": []}, {"Number": 86, "Kind": "rewards", "Floor": 14, "Turn": 6, "Message": "Card rewards: Shadow Shield | Beam Cell | Lightning Rod", "Hand": ["Hologram+", "Wound", "Strike", "Dualcast+"], "Status": "HP 50/81 \u00b7 Energy 2 \u00b7 Orbs 3/3: GLASS_ORB, FROST_ORB, LIGHTNING_ORB", "Screenshot": "shots/0086_rewards.webp", "Highlights": []}, {"Number": 87, "Kind": "pick", "Floor": 14, "Turn": 6, "Message": "Picked Shadow Shield. Offered: Shadow Shield | Beam Cell | Lightning Rod", "Hand": ["Hologram+", "Wound", "Strike", "Dualcast+"], "Status": "HP 50/81 \u00b7 Energy 2 \u00b7 Orbs 3/3: GLASS_ORB, FROST_ORB, LIGHTNING_ORB", "Screenshot": "shots/0087_pick.webp", "Highlights": []}]}, {"floor": 15, "type": "elite", "encounter": "Phantasmal Gardeners", "turns": 4, "hp_before": 50, "hp_after": 42, "max_hp": 81, "damage": 8, "gained": ["Hologram"], "upgraded": [], "offered": ["Hologram", "Sweeping Beam", "Momentum Strike"], "skipped_reward": false, "rest": [], "relics": ["Gremlin Horn"], "potions_used": ["Potion Shaped Rock"], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Dualcast+": 1, "Hologram+": 1, "Fight Through": 1, "Shadow Shield": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Dualcast+": 1, "Hologram+": 1, "Fight Through": 1, "Shadow Shield": 1, "Hologram": 1}, "events": [{"Number": 88, "Kind": "hand", "Floor": 15, "Turn": 1, "Message": "Artificial Creation entered the hand", "Hand": ["Barrage", "Ascender's Bane", "Artificial Creation", "Strike", "Zap"], "Status": "HP 50/81 \u00b7 Energy 4 \u00b7 Orbs 1/3: LIGHTNING_ORB", "Screenshot": "shots/0088_hand.webp", "Highlights": [{"X": 50, "Y": 95.37036895751953, "Width": 12.5, "Height": 4.629631042480469, "Label": "Artificial Creation \u00b7 3/5"}]}, {"Number": 89, "Kind": "selected", "Floor": 15, "Turn": 1, "Message": "Selected Artificial Creation (may be cancelled)", "Hand": ["Barrage", "Ascender's Bane", "Artificial Creation", "Strike", "Zap"], "Status": "HP 50/81 \u00b7 Energy 4 \u00b7 Orbs 1/3: LIGHTNING_ORB", "Screenshot": "shots/0089_selected.webp", "Highlights": [{"X": 50, "Y": 80.64814758300781, "Width": 15.625, "Height": 19.351852416992188, "Label": "Artificial Creation \u00b7 3/5"}]}, {"Number": 90, "Kind": "played", "Floor": 15, "Turn": 1, "Message": "Played Artificial Creation", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 91, "Kind": "resolved", "Floor": 15, "Turn": 1, "Message": "Artificial Creation resolved", "Hand": [], "Status": "HP 50/81 \u00b7 Energy 1 \u00b7 Orbs 3/3: LIGHTNING_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": null, "Highlights": []}, {"Number": 92, "Kind": "after", "Floor": 15, "Turn": 1, "Message": "After Artificial Creation (settled frame)", "Hand": ["Barrage", "Ascender's Bane", "Strike", "Zap"], "Status": "HP 50/81 \u00b7 Energy 1 \u00b7 Orbs 3/3: LIGHTNING_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": "shots/0092_after.webp", "Highlights": []}, {"Number": 93, "Kind": "played", "Floor": 15, "Turn": 1, "Message": "Played Barrage \u2192 PHANTASMAL_GARDENER", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 94, "Kind": "played", "Floor": 15, "Turn": 2, "Message": "Played Hologram+", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 95, "Kind": "played", "Floor": 15, "Turn": 2, "Message": "Played Barrage \u2192 PHANTASMAL_GARDENER", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 96, "Kind": "played", "Floor": 15, "Turn": 2, "Message": "Played Fight Through", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 97, "Kind": "played", "Floor": 15, "Turn": 3, "Message": "Played Shadow Shield", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 98, "Kind": "played", "Floor": 15, "Turn": 3, "Message": "Played Strike \u2192 PHANTASMAL_GARDENER", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 99, "Kind": "played", "Floor": 15, "Turn": 4, "Message": "Played Refract \u2192 PHANTASMAL_GARDENER", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 100, "Kind": "fight_rewards", "Floor": 15, "Turn": 4, "Message": "Fight rewards", "Hand": ["Chill", "Dualcast+", "Strike", "Strike"], "Status": "HP 42/81 \u00b7 Energy 0 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, DARK_ORB", "Screenshot": "shots/0100_fight_rewards.webp", "Highlights": []}, {"Number": 101, "Kind": "rewards", "Floor": 15, "Turn": 4, "Message": "Card rewards: Sweeping Beam | Momentum Strike | Hologram", "Hand": ["Chill", "Dualcast+", "Strike", "Strike"], "Status": "HP 42/81 \u00b7 Energy 0 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, DARK_ORB", "Screenshot": "shots/0101_rewards.webp", "Highlights": []}, {"Number": 102, "Kind": "pick", "Floor": 15, "Turn": 4, "Message": "Picked Hologram. Offered: Sweeping Beam | Momentum Strike | Hologram", "Hand": ["Chill", "Dualcast+", "Strike", "Strike"], "Status": "HP 42/81 \u00b7 Energy 0 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, DARK_ORB", "Screenshot": "shots/0102_pick.webp", "Highlights": []}]}, {"floor": 16, "type": "rest_site", "encounter": "", "turns": 0, "hp_before": 42, "hp_after": 42, "max_hp": 81, "damage": 0, "gained": [], "upgraded": ["Hologram"], "offered": [], "skipped_reward": false, "rest": ["SMITH"], "relics": [], "potions_used": [], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Dualcast+": 1, "Hologram+": 1, "Fight Through": 1, "Shadow Shield": 1, "Hologram": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Dualcast+": 1, "Hologram+": 2, "Fight Through": 1, "Shadow Shield": 1}, "events": []}, {"floor": 17, "type": "boss", "encounter": "Lagavulin Matriarch", "turns": 12, "hp_before": 42, "hp_after": 6, "max_hp": 81, "damage": 36, "gained": ["Machine Learning"], "upgraded": [], "offered": ["Machine Learning", "Adaptive Strike", "Voltaic"], "skipped_reward": false, "rest": [], "relics": [], "potions_used": ["Clarity"], "deck_before": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Dualcast+": 1, "Hologram+": 2, "Fight Through": 1, "Shadow Shield": 1}, "deck_after": {"Strike": 4, "Defend": 4, "Zap": 1, "Ascender's Bane": 1, "Artificial Creation": 1, "Refract": 1, "Barrage": 1, "Chill": 1, "Dualcast+": 1, "Hologram+": 2, "Fight Through": 1, "Shadow Shield": 1, "Machine Learning": 1}, "events": [{"Number": 103, "Kind": "played", "Floor": 17, "Turn": 1, "Message": "Played Zap", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 104, "Kind": "hand", "Floor": 17, "Turn": 2, "Message": "Artificial Creation entered the hand", "Hand": ["Refract", "Defend", "Shadow Shield", "Artificial Creation", "Defend"], "Status": "HP 42/81 \u00b7 Energy 3 \u00b7 Orbs 2/3: LIGHTNING_ORB, LIGHTNING_ORB", "Screenshot": "shots/0104_hand.webp", "Highlights": [{"X": 57.387351989746094, "Y": 97.21484375, "Width": 13.69610595703125, "Height": 2.78515625, "Label": "Artificial Creation \u00b7 4/5"}]}, {"Number": 105, "Kind": "played", "Floor": 17, "Turn": 2, "Message": "Played Shadow Shield", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 106, "Kind": "played", "Floor": 17, "Turn": 3, "Message": "Played Dualcast+", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 107, "Kind": "played", "Floor": 17, "Turn": 3, "Message": "Played Hologram+", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 108, "Kind": "played", "Floor": 17, "Turn": 3, "Message": "Played Chill", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 109, "Kind": "played", "Floor": 17, "Turn": 3, "Message": "Played Shadow Shield", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 110, "Kind": "played", "Floor": 17, "Turn": 4, "Message": "Played Fight Through", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 111, "Kind": "played", "Floor": 17, "Turn": 4, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 112, "Kind": "played", "Floor": 17, "Turn": 4, "Message": "Played Strike \u2192 LAGAVULIN_MATRIARCH", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 113, "Kind": "played", "Floor": 17, "Turn": 5, "Message": "Played Dualcast+", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 114, "Kind": "played", "Floor": 17, "Turn": 5, "Message": "Played Shadow Shield", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 115, "Kind": "played", "Floor": 17, "Turn": 5, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 116, "Kind": "hand", "Floor": 17, "Turn": 6, "Message": "Artificial Creation entered the hand", "Hand": ["Defend", "Barrage", "Defend", "Zap", "Artificial Creation"], "Status": "HP 39/81 \u00b7 Energy 3 \u00b7 Orbs 3/3: FROST_ORB, DARK_ORB, DARK_ORB", "Screenshot": "shots/0116_hand.webp", "Highlights": [{"X": 64.80741882324219, "Y": 100, "Width": 14.825477600097656, "Height": 0, "Label": "Artificial Creation \u00b7 5/5"}]}, {"Number": 117, "Kind": "played", "Floor": 17, "Turn": 6, "Message": "Played Barrage \u2192 LAGAVULIN_MATRIARCH", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 118, "Kind": "played", "Floor": 17, "Turn": 6, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 119, "Kind": "played", "Floor": 17, "Turn": 6, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 120, "Kind": "played", "Floor": 17, "Turn": 7, "Message": "Played Refract \u2192 LAGAVULIN_MATRIARCH", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 121, "Kind": "played", "Floor": 17, "Turn": 8, "Message": "Played Shadow Shield", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 122, "Kind": "played", "Floor": 17, "Turn": 8, "Message": "Played Strike \u2192 LAGAVULIN_MATRIARCH", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 123, "Kind": "played", "Floor": 17, "Turn": 9, "Message": "Played Hologram+", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 124, "Kind": "played", "Floor": 17, "Turn": 9, "Message": "Played Fight Through", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 125, "Kind": "played", "Floor": 17, "Turn": 9, "Message": "Played Barrage \u2192 LAGAVULIN_MATRIARCH", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 126, "Kind": "hand", "Floor": 17, "Turn": 10, "Message": "Artificial Creation entered the hand", "Hand": ["Dualcast+", "Wound", "Defend", "Artificial Creation"], "Status": "HP 13/81 \u00b7 Energy 3 \u00b7 Orbs 3/3: GLASS_ORB, GLASS_ORB, DARK_ORB", "Screenshot": "shots/0126_hand.webp", "Highlights": [{"X": 59.63553237915039, "Y": 97.6657485961914, "Width": 14.82547378540039, "Height": 2.3342514038085938, "Label": "Artificial Creation \u00b7 4/4"}]}, {"Number": 127, "Kind": "played", "Floor": 17, "Turn": 10, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 128, "Kind": "played", "Floor": 17, "Turn": 10, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 129, "Kind": "played", "Floor": 17, "Turn": 10, "Message": "Played Defend", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 130, "Kind": "played", "Floor": 17, "Turn": 10, "Message": "Played Dualcast+", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 131, "Kind": "played", "Floor": 17, "Turn": 11, "Message": "Played Zap", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 132, "Kind": "played", "Floor": 17, "Turn": 11, "Message": "Played Hologram+", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 133, "Kind": "played", "Floor": 17, "Turn": 11, "Message": "Played Zap", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 134, "Kind": "played", "Floor": 17, "Turn": 12, "Message": "Played Refract \u2192 LAGAVULIN_MATRIARCH", "Hand": [], "Status": "", "Screenshot": null, "Highlights": []}, {"Number": 135, "Kind": "fight_rewards", "Floor": 17, "Turn": 12, "Message": "Fight rewards", "Hand": ["Wound", "Strike", "Barrage", "Strike", "Hologram+"], "Status": "HP 6/81 \u00b7 Energy 0 \u00b7 Orbs 3/3: LIGHTNING_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": "shots/0135_fight_rewards.webp", "Highlights": []}, {"Number": 136, "Kind": "rewards", "Floor": 17, "Turn": 12, "Message": "Card rewards: Machine Learning | Adaptive Strike | Voltaic", "Hand": ["Wound", "Strike", "Barrage", "Strike", "Hologram+"], "Status": "HP 6/81 \u00b7 Energy 0 \u00b7 Orbs 3/3: LIGHTNING_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": "shots/0136_rewards.webp", "Highlights": []}, {"Number": 137, "Kind": "pick", "Floor": 17, "Turn": 12, "Message": "Picked Machine Learning. Offered: Machine Learning | Adaptive Strike | Voltaic", "Hand": ["Wound", "Strike", "Barrage", "Strike", "Hologram+"], "Status": "HP 6/81 \u00b7 Energy 0 \u00b7 Orbs 3/3: LIGHTNING_ORB, GLASS_ORB, GLASS_ORB", "Screenshot": "shots/0137_pick.webp", "Highlights": []}]}]};
+const AC = "Artificial Creation";
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const FIGHTS = new Set(["monster", "elite", "boss"]);
+const isFight = n => n.events.length > 0 || FIGHTS.has(n.type);
+const ROOM = { monster: "Monster", elite: "Elite", boss: "Boss", unknown: "Unknown room" };
+const deckSize = d => Object.values(d).reduce((a, b) => a + b, 0);
+const ORDER = [AC, "Strike", "Defend", "Zap", "Dualcast", "Dualcast+"];
+const sortDeck = d => Object.entries(d).sort((a, b) => {
+  const ia = ORDER.indexOf(a[0]), ib = ORDER.indexOf(b[0]);
+  return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a[0].localeCompare(b[0]);
+});
+
+function acStatus(n) {
+  const turnsPlayed = [...new Set(n.events.filter(e => e.Kind === "played" && e.Message === "Played " + AC).map(e => e.Turn))];
+  const turnsHeld = [...new Set(n.events.filter(e => e.Kind === "hand").map(e => e.Turn))];
+  if (turnsPlayed.length) return { cls: "played", label: "Played T" + turnsPlayed.join(", T"), played: turnsPlayed, held: turnsHeld };
+  if (turnsHeld.length) return { cls: "held", label: "Drawn, not played", played: [], held: turnsHeld };
+  return { cls: "none", label: "Not drawn", played: [], held: [] };
+}
+
+function chips(deck, prev) {
+  return sortDeck(deck).map(([name, count]) => {
+    const was = prev ? (prev[name] || 0) : count;
+    const cls = [name === AC ? "ac" : "", prev && count > was ? (name.endsWith("+") && !(prev[name]) && prev[name.slice(0, -1)] !== undefined ? "up" : "new") : ""].join(" ").trim();
+    return `<span class="chip ${cls}">${esc(name)}${count > 1 ? `<span class="n">×${count}</span>` : ""}</span>`;
+  }).join("");
+}
+
+function shot(e, small) {
+  const kind = { hand: "In hand", selected: "Selected", after: "After play", fight_rewards: "Rewards", rewards: "Card offer", pick: "Pick", skip: "Skipped" }[e.Kind] || e.Kind;
+  const tagCls = ["hand", "selected", "after"].includes(e.Kind) ? e.Kind : "reward";
+  let detail = "";
+  if (e.Kind === "hand") {
+    const i = e.Hand.indexOf(AC);
+    detail = `Card ${i + 1} of ${e.Hand.length}: ${e.Hand.map(esc).join(" · ")}`;
+  } else if (e.Kind === "rewards" || e.Kind === "pick" || e.Kind === "skip") {
+    detail = esc(e.Message);
+  }
+  const cap = `${kind}, floor ${e.Floor} turn ${e.Turn}. ${e.Status || ""}`;
+  const title = `Floor ${e.Floor} · ${ENC[e.Floor]} · Turn ${e.Turn}`;
+  return `<figure>
+    <button type="button" data-src="${esc(e.Screenshot)}" data-cap="${esc(cap)}" data-title="${esc(title)}" data-kind="${esc(kind)}" data-tag="${tagCls}" data-status="${esc(e.Status || "")}" data-detail="${esc(detail.replace(/&amp;/g, "&"))}" aria-label="Enlarge: ${esc(cap)}"><img loading="lazy" src="${esc(e.Screenshot)}" alt="${esc(cap)}"></button>
+    <figcaption><span class="tag ${tagCls}">${kind} · #${e.Number}</span>${small ? "" : `<span class="mono">${esc(e.Status || "")}</span>`}${detail ? `<span>${detail}</span>` : ""}</figcaption>
+  </figure>`;
+}
+
+function turnsHtml(n, st) {
+  const combat = n.events.filter(e => !["fight_rewards", "rewards", "pick", "skip"].includes(e.Kind));
+  const turns = [...new Set(combat.map(e => e.Turn))].sort((a, b) => a - b);
+  return turns.map(t => {
+    const evs = combat.filter(e => e.Turn === t);
+    const plays = evs.filter(e => e.Kind === "played");
+    const shots = evs.filter(e => e.Screenshot);
+    const hadAC = st.held.includes(t), playedAC = st.played.includes(t);
+    let verdict = "";
+    if (playedAC) verdict = `<div class="verdict played">Played Artificial Creation this turn.</div>`;
+    else if (hadAC) verdict = `<div class="verdict held">Artificial Creation stayed in hand.</div>`;
+    const playList = plays.length
+      ? plays.map(p => { const name = p.Message.replace(/^Played /, "").replace(/→ ([A-Z_]+)/, (_, t) => "→ " + t.toLowerCase().replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())); return `<span class="p ${name === AC ? "ac" : ""}">${esc(name)}</span>`; }).join("")
+      : `<span class="muted">No cards played</span>`;
+    return `<div class="turn"><div class="turn-label">Turn ${t}</div><div class="turn-body">
+      ${verdict}
+      <div class="plays"><span class="k">Played:</span>${playList}</div>
+      ${shots.length ? `<div class="shots">${shots.map(e => shot(e)).join("")}</div>` : ""}
+    </div></div>`;
+  }).join("");
+}
+
+function fightHtml(n) {
+  const st = acStatus(n);
+  const rewardShots = n.events.filter(e => ["fight_rewards", "rewards", "pick", "skip"].includes(e.Kind) && e.Screenshot);
+  const gain = n.gained.length ? `Added ${n.gained.map(esc).join(", ")}` + (n.offered.length ? ` from ${n.offered.map(esc).join(" / ")}.` : ".")
+    : n.skipped_reward ? `Skipped ${n.offered.map(esc).join(" / ")}.` : "No card added.";
+  const extras = [n.relics.length ? `Relic: ${n.relics.map(esc).join(", ")}.` : "", n.potions_used.length ? `Potions used: ${n.potions_used.map(esc).join(", ")}.` : ""].filter(Boolean).join(" ");
+  const roomCls = n.type === "unknown" ? "" : n.type;
+  return `<article class="fight is-${st.cls}" id="f${n.floor}">
+    <div class="fight-head">
+      <span class="eyebrow">Floor ${n.floor}</span>
+      <h2>${esc(n.encounter)}</h2>
+      <span class="pill room ${roomCls}">${ROOM[n.type] || n.type}</span>
+      <span class="pill ${st.cls}">${st.label}</span>
+    </div>
+    <div class="stats">
+      <span>HP <b>${n.hp_before} → ${n.hp_after}</b> <span class="muted">/ ${n.max_hp}</span></span>
+      <span class="dmg">Damage taken <b>${n.damage}</b></span>
+      <span>Turns <b>${n.turns}</b></span>
+      ${st.held.length ? `<span>In hand on <b>T${st.held.join(", T")}</b></span>` : ""}
+    </div>
+    <div class="decks">
+      <div class="deck"><h3>Deck before <span class="muted mono">· ${deckSize(n.deck_before)}</span></h3><div class="chips">${chips(n.deck_before)}</div></div>
+      <div class="deck"><h3>Deck after <span class="muted mono">· ${deckSize(n.deck_after)}</span></h3><div class="chips">${chips(n.deck_after, n.deck_before)}</div><div class="note">${gain} ${extras}</div></div>
+    </div>
+    ${n.events.some(e => !["fight_rewards", "rewards", "pick", "skip"].includes(e.Kind)) ? `<div class="turns">${turnsHtml(n, st)}</div>` : `<p class="note">No card plays were recorded for this fight.</p>`}
+    ${rewardShots.length ? `<details class="rw"><summary>Reward screens (${rewardShots.length})</summary><div class="shots rewards">${rewardShots.map(e => shot(e, true)).join("")}</div></details>` : ""}
+  </article>`;
+}
+
+function stopHtml(n) {
+  const name = { ancient: "Neow", rest_site: "Rest site", treasure: "Treasure", unknown: n.encounter }[n.type] || n.encounter;
+  const bits = [];
+  if (n.rest.length) bits.push(n.rest.map(r => r === "SMITH" ? "Smith" : r === "HEAL" ? "Rest" : r).join(", "));
+  if (n.upgraded.length) bits.push(`upgraded ${n.upgraded.map(c => `${esc(c)} → ${esc(c)}+`).join(", ")}`);
+  if (n.gained.length) bits.push(`added ${n.gained.map(esc).join(", ")}`);
+  if (n.relics.length) bits.push(`relic ${n.relics.map(esc).join(", ")}`);
+  if (n.max_hp !== (n._prevMax ?? n.max_hp)) bits.push(`max HP ${n._prevMax} → ${n.max_hp}`);
+  const hp = n.hp_before !== n.hp_after ? `<span class="mono">HP ${n.hp_before} → ${n.hp_after}</span>` : "";
+  return `<div class="stop"><span class="eyebrow">Floor ${n.floor}</span><b>${esc(name)}</b><span>${bits.join(" · ") || "No deck change"}</span>${hp}</div>`;
+}
+
+const ENC = {};
+function render() {
+  const nodes = DATA.nodes;
+  nodes.forEach(n => { ENC[n.floor] = n.encounter; });
+  nodes.forEach((n, i) => { n._prevMax = i ? nodes[i - 1].max_hp : n.max_hp; });
+  const fights = nodes.filter(n => FIGHTS.has(n.type) || n.events.length);
+  const stats = fights.map(n => ({ n, st: acStatus(n) }));
+  const by = cls => stats.filter(s => s.st.cls === cls);
+  const avg = arr => arr.length ? (arr.reduce((a, s) => a + s.n.damage, 0) / arr.length).toFixed(1) : "–";
+  document.getElementById("runline").textContent = `Defect · Ascension ${DATA.ascension} · Seed ${DATA.seed} · Act 1 · Session ${DATA.session}`;
+  document.getElementById("lede").innerHTML =
+    `Artificial Creation was in your opening or drawn hand in <b>${fights.length - by("none").length} of ${fights.length}</b> fights and played in <b>${by("played").length}</b>. ` +
+    `Average damage taken: <b>${avg(by("played"))}</b> when played (${by("played").length} fights), <b>${avg(by("held"))}</b> when drawn but not played (${by("held").length}), <b>${avg(by("none"))}</b> when not drawn (${by("none").length}). ` +
+    `These are single fights against different enemies, so treat the averages as anecdotes. Press → or click a screenshot to flip through every capture full screen.`;
+  const maxDmg = Math.max(...fights.map(f => f.damage));
+  document.getElementById("summary").innerHTML = `<thead><tr><th>Floor</th><th>Fight</th><th>Artificial Creation</th><th class="num">Turns</th><th class="num">HP after</th><th>Damage taken</th></tr></thead><tbody>` +
+    stats.map(({ n, st }) => `<tr><td class="num">${n.floor}</td><td><a href="#f${n.floor}">${esc(n.encounter)}</a> <span class="muted">${n.type === "monster" || n.type === "unknown" ? "" : ROOM[n.type]}</span></td><td><span class="pill ${st.cls}">${st.label}</span></td><td class="num">${n.turns}</td><td class="num">${n.hp_after}/${n.max_hp}</td><td class="mono">${String(n.damage).padStart(2, " ")}<span class="bar" style="width:${(n.damage / maxDmg * 120).toFixed(0)}px"></span></td></tr>`).join("") + `</tbody>`;
+  document.getElementById("timeline").innerHTML = nodes.map(n => (FIGHTS.has(n.type) || n.events.length) ? fightHtml(n) : stopHtml(n)).join("");
+}
+render();
+
+const dlg = document.getElementById("viewer");
+const vImg = document.getElementById("viewer-img");
+const SHOTS = [...document.querySelectorAll("figure button[data-src]")].map(b => b.dataset);
+const cache = {};
+let cur = 0;
+function preload(i) { const s = SHOTS[i]; if (s && !cache[s.src]) { cache[s.src] = new Image(); cache[s.src].src = s.src; } }
+function show(i) {
+  cur = (i + SHOTS.length) % SHOTS.length;
+  const s = SHOTS[cur];
+  vImg.src = s.src; vImg.alt = s.cap;
+  const esc2 = t => esc(t || "");
+  document.getElementById("viewer-cap").innerHTML = `<b>${esc2(s.title)} <span class="v-tag ${s.tag}">${esc2(s.kind)}</span></b>${s.status ? `<span>${esc2(s.status)}</span>` : ""}${s.detail ? `<span>${esc2(s.detail)}</span>` : ""}`;
+  document.getElementById("v-count").textContent = `${cur + 1} / ${SHOTS.length}`;
+  for (const d of [1, 2, 3, -1]) preload(cur + d);
+}
+function open(i) { show(i); if (!dlg.open) dlg.showModal(); }
+document.addEventListener("click", ev => {
+  const b = ev.target.closest("figure button[data-src]");
+  if (b) open(SHOTS.findIndex(s => s.src === b.dataset.src));
+});
+document.getElementById("go").addEventListener("click", () => open(0));
+document.getElementById("v-prev").addEventListener("click", () => show(cur - 1));
+document.getElementById("v-next").addEventListener("click", () => show(cur + 1));
+document.getElementById("v-close").addEventListener("click", () => dlg.close());
+document.getElementById("v-stage").addEventListener("click", ev => { if (ev.target !== vImg) dlg.close(); });
+document.addEventListener("keydown", ev => {
+  if (ev.altKey || ev.ctrlKey || ev.metaKey) return;
+  const k = ev.key;
+  if (!dlg.open) { if (k === "ArrowRight" || k === "ArrowLeft") { ev.preventDefault(); open(k === "ArrowRight" ? cur : cur - 1); } return; }
+  if (k === "ArrowRight" || k === "ArrowDown" || k === " ") { ev.preventDefault(); show(cur + 1); }
+  else if (k === "ArrowLeft" || k === "ArrowUp") { ev.preventDefault(); show(cur - 1); }
+  else if (k === "Home") { ev.preventDefault(); show(0); }
+  else if (k === "End") { ev.preventDefault(); show(SHOTS.length - 1); }
+});
+function openFromHash() {
+  const m = location.hash.match(/^#photos?(?:-(\d+))?$/);
+  if (m) open(m[1] ? Math.min(Math.max(+m[1], 1), SHOTS.length) - 1 : 0);
+}
+openFromHash();
+window.addEventListener("hashchange", openFromHash);
+let x0 = null;
+dlg.addEventListener("touchstart", ev => { x0 = ev.touches[0].clientX; }, { passive: true });
+dlg.addEventListener("touchend", ev => {
+  if (x0 === null) return;
+  const dx = ev.changedTouches[0].clientX - x0; x0 = null;
+  if (Math.abs(dx) > 40) show(cur + (dx < 0 ? 1 : -1));
+});
+dlg.addEventListener("close", () => document.getElementById("f" + (SHOTS[cur].title.match(/Floor (\d+)/) || [])[1])?.scrollIntoView({ block: "start" }));
+</script>
+
+</body>
+</html>

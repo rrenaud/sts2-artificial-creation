@@ -1,0 +1,12 @@
+{
+  "id": "ArtificialCreation",
+  "name": "Artificial Creation",
+  "author": "rrenaud; card concept by u/Suspicious_Badger_18",
+  "description": "Adds Artificial Creation, a rare Defect power that fills empty Orb Slots with Glass. Costs 3 energy, or 2 when upgraded.",
+  "version": "v0.1.0",
+  "min_game_version": "0.111.0",
+  "has_pck": false,
+  "has_dll": true,
+  "dependencies": [{ "id": "BaseLib", "min_version": "3.4.7" }],
+  "affects_gameplay": true
+}
