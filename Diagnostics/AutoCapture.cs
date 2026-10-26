@@ -15,7 +15,12 @@ internal static class AutoCapture
     private static RunState? _run;
     private static PlaytestReport? _report;
     private static string? _directory;
+    private static int _nextNumber;
     private static readonly HashSet<string> Pending = [];
+    // PNG encoding and report rendering take long enough to hitch a card drag,
+    // so they run on one background chain that keeps entries in order.
+    private static Task _writes = Task.CompletedTask;
+    private static readonly object WritesLock = new();
     private static bool _failed;
     private static bool _userEnabled = true;
     internal static string Root => Path.Combine(ProjectSettings.GlobalizePath("user://"), "artificial_creation_playtests");
@@ -46,6 +51,20 @@ internal static class AutoCapture
             _failed = true;
             System.Console.Error.WriteLine($"[ArtificialCreation] Auto-capture disabled after an error: {e}");
         }
+    }
+
+    private static void Background(Action action)
+    {
+        lock (WritesLock)
+            _writes = _writes.ContinueWith(_ =>
+            {
+                try { action(); }
+                catch (Exception e)
+                {
+                    _failed = true;
+                    System.Console.Error.WriteLine($"[ArtificialCreation] Auto-capture disabled after an error: {e}");
+                }
+            }, TaskScheduler.Default);
     }
 
     internal static void Later(string key, double delay, Func<bool> stillRelevant, Action action)
@@ -90,7 +109,11 @@ internal static class AutoCapture
                 Directory.CreateDirectory(_directory);
                 File.WriteAllText(Path.Combine(root, "latest.txt"), _directory);
                 _report = new PlaytestReport(_directory, run.Rng.StringSeed);
+                _nextNumber = 1;
             }
+            var report = _report!;
+            string directory = _directory!;
+            int number = _nextNumber++;
             var state = player.PlayerCombatState;
             var combat = player.Creature.CombatState;
             var holders = NPlayerHand.Instance?.ActiveHolders.Where(h => h.CardModel != null)
@@ -98,15 +121,16 @@ internal static class AutoCapture
             string[] hand = screenshot ? holders.Select(h => h.CardModel!.Title).ToArray() : [];
             var highlights = new List<Highlight>();
             string? filename = null;
+            Image? image = null;
             if (screenshot && Engine.GetMainLoop() is SceneTree tree)
             {
                 var viewport = tree.Root;
-                using var image = viewport.GetTexture().GetImage();
-                if (image != null && !image.IsEmpty())
+                // The GPU readback has to happen on the main thread; encoding does not.
+                image = viewport.GetTexture().GetImage();
+                if (image != null && image.IsEmpty()) { image.Dispose(); image = null; }
+                if (image != null)
                 {
-                    filename = $"{_report!.NextNumber:0000}_{kind}.png";
-                    if (image.SavePng(Path.Combine(_directory!, filename)) != Error.Ok)
-                        throw new IOException("Could not save screenshot");
+                    filename = $"{number:0000}_{kind}.png";
                     var viewportSize = viewport.GetVisibleRect().Size;
                     for (int i = 0; i < holders.Length; i++)
                     {
@@ -131,8 +155,16 @@ internal static class AutoCapture
             if (includeStatus && combat != null && state != null)
                 status += $" · Energy {state.Energy} · Orbs {state.OrbQueue.Orbs.Count}/{state.OrbQueue.Capacity}: " +
                     string.Join(", ", state.OrbQueue.Orbs.Select(o => o.Id.Entry));
-            _report!.Append(new PlaytestEntry(_report.NextNumber, kind, run.TotalFloor, combat?.RoundNumber ?? 0,
-                message, hand, status, filename, highlights.ToArray()));
+            var entry = new PlaytestEntry(number, kind, run.TotalFloor, combat?.RoundNumber ?? 0,
+                message, hand, status, filename, highlights.ToArray());
+            Background(() =>
+            {
+                if (image != null)
+                    using (image)
+                        if (image.SavePng(Path.Combine(directory, filename!)) != Error.Ok)
+                            throw new IOException("Could not save screenshot");
+                report.Append(entry);
+            });
         });
     }
 }

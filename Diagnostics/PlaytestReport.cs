@@ -11,7 +11,6 @@ public sealed record PlaytestEntry(int Number, string Kind, int Floor, int Turn,
 public sealed class PlaytestReport(string directory, string seed)
 {
     private readonly List<PlaytestEntry> _entries = [];
-    public int NextNumber => _entries.Count + 1;
 
     public void Append(PlaytestEntry entry)
     {

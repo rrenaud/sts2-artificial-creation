@@ -1,6 +1,5 @@
 using System.Reflection;
 using ArtificialCreation;
-using ArtificialCreation.Powers;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Commands;
@@ -16,6 +15,7 @@ using MegaCrit.Sts2.Core.Saves;
 using MegaCrit.Sts2.Core.TestSupport;
 using MegaCrit.Sts2.Core.Unlocks;
 using Card = ArtificialCreation.Cards.ArtificialCreation;
+using Branch = ArtificialCreation.Cards.BranchPrediction;
 
 // Run the installed game's real orb commands and hooks without a Godot window.
 // Only save-manager access is stubbed; TestMode disables audiovisual waits.
@@ -27,7 +27,7 @@ if (args.Contains("--seed-search"))
     new Harmony("ArtificialCreation.SeedSearch.Ids").CreateClassProcessor(typeof(BaseLib.Patches.Content.PrefixIdPatch)).Patch();
 var types = typeof(ModelDb).Assembly.GetTypes()
     .Where(t => !t.IsAbstract && t.IsSubclassOf(typeof(AbstractModel)) && t.GetConstructor(Type.EmptyTypes) != null)
-    .Concat([typeof(Card), typeof(ArtificialCreationPower)]).ToArray();
+    .Concat([typeof(Card), typeof(Branch)]).ToArray();
 AccessTools.Field(typeof(ModelDb), "_allAbstractModelSubtypes").SetValue(null, types);
 ModelDb.Init(types);
 if (args.Contains("--seed-search"))
@@ -69,69 +69,55 @@ field.SetValue(manager, turn);
 var queue = player.PlayerCombatState!.OrbQueue;
 
 var card = combat.CreateCard<Card>(player);
-Check(card.Type == CardType.Power && card.Rarity == CardRarity.Rare && card.Pool is MegaCrit.Sts2.Core.Models.CardPools.DefectCardPool,
-    "Rare Defect power registered in the Defect pool");
-Check(card.EnergyCost.GetWithModifiers(CostModifiers.Local) == 3, "Base energy cost is 3");
-card.UpgradeInternal();
-Check(card.EnergyCost.GetWithModifiers(CostModifiers.Local) == 2, "Upgraded energy cost is 2");
+Check(card.Type == CardType.Skill && card.Rarity == CardRarity.Rare && card.Pool is MegaCrit.Sts2.Core.Models.CardPools.DefectCardPool,
+    "Rare Defect skill registered in the Defect pool");
+Check(card.EnergyCost.GetWithModifiers(CostModifiers.Local) == 2 && card.DynamicVars.Block.BaseValue == 10m,
+    "Base energy cost is 2 with 10 Block");
+var upgraded = combat.CreateCard<Card>(player);
+upgraded.UpgradeInternal();
+Check(upgraded.EnergyCost.GetWithModifiers(CostModifiers.Local) == 1 && upgraded.DynamicVars.Block.BaseValue == 10m,
+    "Upgraded energy cost is 1 with the same Block");
+
+await card.BeforeHandDraw(player, context, combat);
+Check(!card.Keywords.Contains(CardKeyword.Innate), "Not Innate in a single-enemy fight");
+
+var branch = combat.CreateCard<Branch>(player);
+Check(branch.Type == CardType.Skill && branch.Pool is MegaCrit.Sts2.Core.Models.CardPools.DefectCardPool
+      && branch.Keywords.Contains(CardKeyword.Innate) && branch.EnergyCost.GetWithModifiers(CostModifiers.Local) == 1
+      && branch.DynamicVars.Block.BaseValue == 5m, "Branch Prediction is an Innate 1-cost Defect skill with 5 Block");
+var upgradedBranch = combat.CreateCard<Branch>(player);
+upgradedBranch.UpgradeInternal();
+Check(upgradedBranch.EnergyCost.GetWithModifiers(CostModifiers.Local) == 0, "Upgraded Branch Prediction costs 0");
+await (Task)AccessTools.Method(typeof(Branch), "OnPlay").Invoke(branch, [context, null])!;
+Check(player.Creature.Block == 5 && queue.Orbs.Count == 1 && queue.Orbs[0] is DarkOrb,
+    "Branch Prediction against one enemy gains 5 Block and channels Dark");
+await OrbCmd.EvokeNext(context, player);
+player.Creature.LoseBlockInternal(player.Creature.Block);
+var second = combat.CreateCreature(ModelDb.Monster<SludgeSpinner>().ToMutable(), CombatSide.Enemy, "test2");
+second.SetMaxHpInternal(10000);
+second.SetCurrentHpInternal(10000);
+combat.AddCreature(second);
+await card.BeforeHandDraw(other, context, combat);
+Check(!card.Keywords.Contains(CardKeyword.Innate), "Another player's hand draw does not make the card Innate");
+await card.BeforeHandDraw(player, context, combat);
+Check(card.Keywords.Contains(CardKeyword.Innate), "Becomes Innate before the opening hand in a multi-enemy fight");
+
+await (Task)AccessTools.Method(typeof(Branch), "OnPlay").Invoke(branch, [context, null])!;
+Check(queue.Orbs.Count == 1 && queue.Orbs[0] is GlassOrb, "Branch Prediction against several enemies channels Glass");
+await OrbCmd.EvokeNext(context, player);
+player.Creature.LoseBlockInternal(player.Creature.Block);
 
 await OrbCmd.Channel<LightningOrb>(context, player);
 var initial = queue.Orbs[0];
-await PowerCmd.Apply<ArtificialCreationPower>(context, player.Creature, 1, player.Creature, card);
+// OnPlayWrapper drives card-pile visuals, so invoke the card's own effect directly.
+await (Task)AccessTools.Method(typeof(Card), "OnPlay").Invoke(card, [context, null])!;
+Check(player.Creature.Block == 10, "Playing the card gains 10 Block");
 Check(queue.Orbs.Count == 3 && ReferenceEquals(queue.Orbs[0], initial) && queue.Orbs.Skip(1).All(o => o is GlassOrb),
-    "Applying the power fills both empty slots and preserves the starting orb");
-Check(other.PlayerCombatState!.OrbQueue.Orbs.Count == 0, "Another player's queue is untouched");
-var beforeDuplicate = queue.Orbs.ToArray();
-await PowerCmd.Apply<ArtificialCreationPower>(context, player.Creature, 1, player.Creature, card);
-Check(player.Creature.Powers.OfType<ArtificialCreationPower>().Count() == 1 && queue.Orbs.SequenceEqual(beforeDuplicate),
-    "Duplicate applications do not channel extra orbs");
-
-await OrbCmd.Channel<FrostOrb>(context, player);
-Check(queue.Orbs.Count == 3 && queue.Orbs.Last() is FrostOrb && !queue.Orbs.Contains(initial),
-    "Full-queue channel preserves the incoming orb and evokes exactly the front orb");
-var front = queue.Orbs[0];
-await OrbCmd.EvokeNext(context, player, dequeue: false);
-Check(queue.Orbs.Count == 3 && ReferenceEquals(front, queue.Orbs[0]), "Non-removing evoke leaves the queue unchanged");
-await OrbCmd.EvokeNext(context, player);
-Check(queue.Orbs.Count == 3 && !queue.Orbs.Contains(front) && queue.Orbs.Last() is GlassOrb,
-    "Removing evoke immediately refills one Glass");
-var last = queue.Orbs.Last();
-await OrbCmd.EvokeLast(context, player);
-Check(queue.Orbs.Count == 3 && !queue.Orbs.Contains(last) && queue.Orbs.Last() is GlassOrb,
-    "EvokeLast refills the vacated slot");
-
-await OrbCmd.AddSlots(player, 2);
-Check(queue.Capacity == 5 && queue.Orbs.Count == 5 && queue.Orbs.TakeLast(2).All(o => o is GlassOrb),
-    "Capacitor-style slot gain fills before AddSlots completes");
-// Shatter snapshots the initial count, then evokes each front orb twice.
-var beforeShatter = queue.Orbs.ToArray();
-foreach (var _ in beforeShatter)
-{
-    await OrbCmd.EvokeNext(context, player, dequeue: false);
-    await OrbCmd.EvokeNext(context, player);
-}
-Check(queue.Orbs.Count == 5 && queue.Orbs.All(o => o is GlassOrb) && !queue.Orbs.Intersect(beforeShatter).Any(),
-    "Shatter's double-evoke sequence replaces every original orb and terminates");
-await OrbCmd.AddSlots(player, 100);
-Check(queue.Capacity == 10 && queue.Orbs.Count == 10, "Slot gain respects the game's ten-slot cap");
-OrbCmd.RemoveSlots(player, 10);
-await OrbCmd.Channel<GlassOrb>(context, player);
-Check(queue.Capacity == 0 && queue.Orbs.Count == 0, "Zero slots cannot create orbs or loop");
-await OrbCmd.AddSlots(player, 2);
-Check(queue.Orbs.Count == 2, "Regaining slots after reaching zero fills them immediately");
-await OrbCmd.AddSlots(other, 2);
-Check(other.PlayerCombatState.OrbQueue.Orbs.Count == 0, "Slot-gain patch has no effect without the power");
-
-// Fault injection validates the asynchronous channel guard is released on failure.
-var canonical = ModelDb.Orb<GlassOrb>();
-try { await OrbCmd.Channel(context, canonical, player); throw new Exception("Expected canonical-orb rejection"); }
-catch (MegaCrit.Sts2.Core.Models.Exceptions.CanonicalModelException) { }
-await OrbCmd.EvokeNext(context, player);
-Check(queue.Orbs.Count == 2, "Channel guard recovers after a failed channel");
-AccessTools.Property(turn.GetType(), "IsInProgress").SetValue(turn, false);
-var countBeforeEnd = queue.Orbs.Count;
-await OrbCmd.AddSlots(player, 2);
-Check(queue.Orbs.Count == countBeforeEnd && queue.Capacity == 2, "No channeling or slot changes after combat ends");
+    "Playing the card channels exactly 2 Glass after the existing orb");
+Check(other.PlayerCombatState!.OrbQueue.Orbs.Count == 0 && other.Creature.Block == 0, "Another player is untouched");
+await (Task)AccessTools.Method(typeof(Card), "OnPlay").Invoke(card, [context, null])!;
+Check(queue.Orbs.Count == 3 && queue.Orbs.All(o => o is GlassOrb) && !queue.Orbs.Contains(initial),
+    "Playing into a full queue evokes the oldest orbs as normal");
 Console.WriteLine($"All {assertions} integration assertions passed against the installed sts2.dll.");
 
 // Diagnostic output must survive refreshes and treat game text as text, not HTML.

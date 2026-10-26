@@ -21,7 +21,7 @@ for src in [package / 'lib/net9.0/BaseLib.dll', package / 'Content/BaseLib.json'
 shutil.copy2(root / 'THIRD_PARTY_NOTICES.md', base / 'THIRD_PARTY_NOTICES.md')
 shutil.copy2(root / 'README.md', out / 'README.md')
 shutil.copy2(root / 'THIRD_PARTY_NOTICES.md', out / 'THIRD_PARTY_NOTICES.md')
-archive = out / 'ArtificialCreation-0.1.0.zip'
+archive = out / 'ArtificialCreation-0.2.0.zip'
 with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as z:
     for folder in [mod, base]:
         for path in sorted(folder.iterdir()):
