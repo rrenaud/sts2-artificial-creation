@@ -4,7 +4,7 @@ Adds two Glass cards to Slay the Spire 2's Defect card pool: Artificial Creation
 [concept by u/Suspicious_Badger_18](https://www.reddit.com/r/slaythespire/comments/1xfbatf/artificial_creation_defect_rare_glass_power/), and Branch Prediction.
 
 - **Download:** [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3827563424) or the [v0.2.0 release zip](https://github.com/rrenaud/sts2-artificial-creation/releases/tag/v0.2.0)
-- **Playtest reviews:** [run 2, Acts 1–2 with the Skill version](https://rrenaud.github.io/sts2-artificial-creation/playtest/run2/) and [run 1, Act 1 with the original Power version](https://rrenaud.github.io/sts2-artificial-creation/playtest/) (use ← → to flip through the screenshots)
+- **Playtest reviews:** [run 3, Speculative Execution on GLASS42 to Act 2](https://rrenaud.github.io/sts2-artificial-creation/playtest/run3/), [run 2, Acts 1–2 with the Skill version](https://rrenaud.github.io/sts2-artificial-creation/playtest/run2/) and [run 1, Act 1 with the original Power version](https://rrenaud.github.io/sts2-artificial-creation/playtest/) (use ← → to flip through the screenshots)
 
 **Artificial Creation**: Rare Skill, **2 energy**, upgraded to **1 energy**.
 > In multi-enemy fights, this is Innate. Gain 10 Block. Channel 2 Glass.
